@@ -12,5 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY sip_calculator.py ./
 
+EXPOSE 5000
+
 # Define the command to run the script when the container starts
 CMD ["python", "./sip_calculator.py"]
