@@ -27,9 +27,11 @@ jobs:
         password: ${{ secrets.JFROG_PASSWORD }} # Or use JFROG_PASSWORD
 
     - name: Build and push Docker image
+      if: github.ref == 'refs/heads/main'
       uses: docker/build-push-action@v5
       with:
+        provenance: false
         context: .
         push: true
-        tags: ${{ secrets.JFROG_URL }}/sumitjhingade-docker/sip_calculator:$(date +%s)
+        tags: ${{ secrets.JFROG_URL }}/sumitjhingade-docker/sip_calculator:latest
         # Example tag format: mycompany.jfrog.io/docker-local/my-app:$(date +%s)
