@@ -31,5 +31,5 @@ jobs:
       with:
         context: .
         push: true
-        tags: ${{ secrets.JFROG_URL }}/sumitjhingade-docker/sip_calculator:latest
+        tags: ${{ secrets.JFROG_URL }}/sumitjhingade-docker/sip_calculator:$(date +%s)
         # Example tag format: mycompany.jfrog.io/docker-local/my-app:$(date +%s)
