@@ -32,13 +32,6 @@ jobs:
             export JFROG_USER="${{ secrets.JFROG_USERNAME }}"
             export JFROG_PASSWORD="${{ secrets.JFROG_PASSWORD }}"
 
-            # Login to JFrog Docker registry
-            echo "${JFROG_PASSWORD}" | docker login ${JFROG_REGISTRY} \
-              --username "${JFROG_USER}" \
-              --password-stdin
-
-            FULL_IMAGE="${JFROG_REGISTRY}/${JFROG_REPO_PATH}/${IMAGE_NAME}:${IMAGE_TAG}"
-            
             # Add Docker's official GPG key:
             sudo apt update
             sudo apt install ca-certificates curl
@@ -60,6 +53,15 @@ jobs:
             sudo systemctl status docker
             sudo systemctl start docker
 
+
+            # Login to JFrog Docker registry
+            echo "${JFROG_PASSWORD}" | docker login ${JFROG_REGISTRY} \
+              --username "${JFROG_USER}" \
+              --password-stdin
+
+            FULL_IMAGE="${JFROG_REGISTRY}/${JFROG_REPO_PATH}/${IMAGE_NAME}:${IMAGE_TAG}"
+            
+            
             # Pull latest image
             docker pull ${FULL_IMAGE}
 
