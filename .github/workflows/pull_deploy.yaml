@@ -1,21 +1,82 @@
+name: Build and Deploy to EC2 (JFrog)
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: my-app                     # logical app name
+  IMAGE_TAG: ${{ github.sha }}           # or "latest"
+  JFROG_REGISTRY: mycompany.jfrog.io     # e.g. mycompany.jfrog.io
+  JFROG_REPO_PATH: my-docker-virtual     # e.g. docker virtual/repo key
+
 jobs:
-  pull-image:
+  build-and-push:
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ${{ env.IMAGE_NAME }}
+      IMAGE_TAG: ${{ env.IMAGE_TAG }}
+      JFROG_REGISTRY: ${{ env.JFROG_REGISTRY }}
+      JFROG_REPO_PATH: ${{ env.JFROG_REPO_PATH }}
+
     steps:
-      - name: Check out repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Log in to JFrog Artifactory
-        # Use the official Docker login action for secure authentication
-        uses: docker/login-action@v3
+      - name: Login to JFrog Docker registry
+        run: |
+          echo "${{ secrets.JFROG_PASSWORD }}" | docker login $JFROG_REGISTRY \
+            --username "${{ secrets.JFROG_USERNAME }}" \
+            --password-stdin
+
+      - name: Build and push image to JFrog
+        run: |
+          # Build local image
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+          # Tag with full JFrog path
+          FULL_IMAGE="$JFROG_REGISTRY/$JFROG_REPO_PATH/$IMAGE_NAME:$IMAGE_TAG"
+          docker tag $IMAGE_NAME:$IMAGE_TAG $FULL_IMAGE
+
+          # Push to JFrog
+          docker push $FULL_IMAGE
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ${{ env.IMAGE_NAME }}
+      IMAGE_TAG: ${{ env.IMAGE_TAG }}
+      JFROG_REGISTRY: ${{ env.JFROG_REGISTRY }}
+      JFROG_REPO_PATH: ${{ env.JFROG_REPO_PATH }}
+
+    steps:
+      - name: Deploy on EC2 via SSH (pull from JFrog)
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          registry: ${{ secrets.ARTIFACTORY_URL }} # e.g., your-instance.jfrog.io
-          username: ${{ secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_TOKEN }}
+          host: ${{ secrets.EC2_HOST }}         # e.g. 15.206.74.145
+          username: ${{ secrets.EC2_USER }}     # e.g. ec2-user, ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}       # private key for EC2
+          envs: IMAGE_NAME,IMAGE_TAG,JFROG_REGISTRY,JFROG_REPO_PATH,JFROG_USER,JFROG_PASSWORD
+          script: |
+            # Export JFrog creds from secrets
+            export JFROG_USER="${{ secrets.JFROG_USERNAME }}"
+            export JFROG_PASSWORD="${{ secrets.JFROG_PASSWORD }}"
 
-      - name: Pull Docker image from Artifactory
-        run: docker pull ${{ secrets.ARTIFACTORY_URL }}/<REPO_NAME>/<IMAGE_NAME>:<TAG>
+            # Login to JFrog Docker registry
+            echo "${JFROG_PASSWORD}" | docker login ${JFROG_REGISTRY} \
+              --username "${JFROG_USER}" \
+              --password-stdin
 
-      - name: Use the pulled image (example: run a container)
-        run: docker run --rm ${{ secrets.ARTIFACTORY_URL }}/<REPO_NAME>/<IMAGE_NAME>:<TAG>
+            FULL_IMAGE="${JFROG_REGISTRY}/${JFROG_REPO_PATH}/${IMAGE_NAME}:${IMAGE_TAG}"
 
+            # Pull latest image
+            docker pull ${FULL_IMAGE}
+
+            # Stop and remove old container if exists
+            docker stop my-app || true
+            docker rm my-app || true
+
+            # Run new container (adjust ports/envs as needed)
+            docker run -d --name my-app -p 80:80 ${FULL_IMAGE}
