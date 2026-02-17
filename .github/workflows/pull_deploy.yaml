@@ -5,7 +5,7 @@ on:
 
 env:
   IMAGE_NAME: sip_calculator                    # logical app name
-  IMAGE_TAG: "latest"          # or "latest"
+  IMAGE_TAG: latest         # or "latest"
   JFROG_REGISTRY: trialcaqi4i.jfrog.io    # e.g. mycompany.jfrog.io
   JFROG_REPO_PATH: sumitjhingade-docker-local    # e.g. docker virtual/repo key
 
