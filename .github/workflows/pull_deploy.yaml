@@ -32,7 +32,9 @@ jobs:
             export JFROG_USER="${{ secrets.JFROG_USERNAME }}"
             export JFROG_PASSWORD="${{ secrets.JFROG_PASSWORD }}"
 
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker ubuntu
+
+            id ubuntu
 
             # Add Docker's official GPG key:
             sudo apt update
