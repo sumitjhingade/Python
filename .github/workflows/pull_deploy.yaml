@@ -70,8 +70,8 @@ jobs:
             docker pull ${FULL_IMAGE}
 
             # Stop and remove old container if exists
-            docker stop my-app || true
-            docker rm my-app || true
+            #docker stop my-app || true
+            #docker rm my-app || true
 
             # Run new container (adjust ports/envs as needed)
             docker run -d --name sip_calculator -p 5000:5000 ${FULL_IMAGE}
