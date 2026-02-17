@@ -4,52 +4,20 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: my-app                     # logical app name
-  IMAGE_TAG: ${{ github.sha }}           # or "latest"
-  JFROG_REGISTRY: mycompany.jfrog.io     # e.g. mycompany.jfrog.io
-  JFROG_REPO_PATH: my-docker-virtual     # e.g. docker virtual/repo key
+  IMAGE_NAME: sip_calculator                    # logical app name
+  IMAGE_TAG: "latest"          # or "latest"
+  JFROG_REGISTRY: trialcaqi4i.jfrog.io    # e.g. mycompany.jfrog.io
+  JFROG_REPO_PATH: sumitjhingade-docker-local    # e.g. docker virtual/repo key
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-
-    env:
-      IMAGE_NAME: ${{ env.IMAGE_NAME }}
-      IMAGE_TAG: ${{ env.IMAGE_TAG }}
-      JFROG_REGISTRY: ${{ env.JFROG_REGISTRY }}
-      JFROG_REPO_PATH: ${{ env.JFROG_REPO_PATH }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Login to JFrog Docker registry
-        run: |
-          echo "${{ secrets.JFROG_PASSWORD }}" | docker login $JFROG_REGISTRY \
-            --username "${{ secrets.JFROG_USERNAME }}" \
-            --password-stdin
-
-      - name: Build and push image to JFrog
-        run: |
-          # Build local image
-          docker build -t $IMAGE_NAME:$IMAGE_TAG .
-
-          # Tag with full JFrog path
-          FULL_IMAGE="$JFROG_REGISTRY/$JFROG_REPO_PATH/$IMAGE_NAME:$IMAGE_TAG"
-          docker tag $IMAGE_NAME:$IMAGE_TAG $FULL_IMAGE
-
-          # Push to JFrog
-          docker push $FULL_IMAGE
-
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: ${{ env.IMAGE_NAME }}
-      IMAGE_TAG: ${{ env.IMAGE_TAG }}
-      JFROG_REGISTRY: ${{ env.JFROG_REGISTRY }}
-      JFROG_REPO_PATH: ${{ env.JFROG_REPO_PATH }}
+      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+      IMAGE_TAG: ${{ vars.IMAGE_TAG }}
+      JFROG_REGISTRY: ${{ secrets.JFROG_REGISTRY }}
+      JFROG_REPO_PATH: ${{ secrets.JFROG_REPO_PATH }}
 
     steps:
       - name: Deploy on EC2 via SSH (pull from JFrog)
@@ -79,4 +47,4 @@ jobs:
             docker rm my-app || true
 
             # Run new container (adjust ports/envs as needed)
-            docker run -d --name my-app -p 80:80 ${FULL_IMAGE}
+            docker run -d --name sip_calculator -p 5000:5000 ${FULL_IMAGE}
