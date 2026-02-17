@@ -4,74 +4,60 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: sip_calculator                    # logical app name
-  IMAGE_TAG: latest         # or "latest"
-  JFROG_REGISTRY: trialcaqi4i.jfrog.io    # e.g. mycompany.jfrog.io
-  JFROG_REPO_PATH: sumitjhingade-docker-local    # e.g. docker virtual/repo key
+  IMAGE_NAME: sip_calculator
+  IMAGE_TAG: latest
+  JFROG_REGISTRY: trialcaqi4i.jfrog.io
+  JFROG_REPO_PATH: sumitjhingade-docker-local
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    env:
-      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-      IMAGE_TAG: ${{ vars.IMAGE_TAG }}
-      JFROG_REGISTRY: ${{ secrets.JFROG_REGISTRY }}
-      JFROG_REPO_PATH: ${{ secrets.JFROG_REPO_PATH }}
 
     steps:
       - name: Deploy on EC2 via SSH (pull from JFrog)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}         # e.g. 15.206.74.145
-          username: ${{ secrets.EC2_USER }}     # e.g. ec2-user, ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}       # private key for EC2
-          envs: IMAGE_NAME,IMAGE_TAG,JFROG_REGISTRY,JFROG_REPO_PATH,JFROG_USER,JFROG_PASSWORD
+          username: ${{ secrets.EC2_USER }}     # e.g. ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_NAME,IMAGE_TAG,JFROG_REGISTRY,JFROG_REPO_PATH
           script: |
-            # Export JFrog creds from secrets
+            # Set JFrog creds from GitHub secrets
             export JFROG_USER="${{ secrets.JFROG_USER }}"
             export JFROG_PASSWORD="${{ secrets.JFROG_PASSWORD }}"
 
-            sudo usermod -aG docker ubuntu
+            # Install Docker (only if not already installed)
+            sudo apt-get update -y
+            sudo apt-get install -y ca-certificates curl gnupg
 
-            id ubuntu
+            if ! command -v docker >/dev/null 2>&1; then
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update -y
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            fi
 
-            # Add Docker's official GPG key:
-            sudo apt update
-            sudo apt install ca-certificates curl
-            sudo install -m 0755 -d /etc/apt/keyrings
-            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-            sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-            ## Add the repository to Apt sources:
-            sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
-            Types: deb
-            URIs: https://download.docker.com/linux/ubuntu
-            Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-            Components: stable
-            Signed-By: /etc/apt/keyrings/docker.asc
-            EOF
-
-            sudo apt update
-            echo "yes"| sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            sudo systemctl status docker
+            sudo systemctl enable docker
             sudo systemctl start docker
 
-
             # Login to JFrog Docker registry
-            echo "${JFROG_PASSWORD}" | docker login ${JFROG_REGISTRY} \
+            echo "${JFROG_PASSWORD}" | sudo docker login "${JFROG_REGISTRY}" \
               --username "${JFROG_USER}" \
               --password-stdin
 
             FULL_IMAGE="${JFROG_REGISTRY}/${JFROG_REPO_PATH}/${IMAGE_NAME}:${IMAGE_TAG}"
-            
-            
+            echo "Using image: ${FULL_IMAGE}"
+
             # Pull latest image
-            docker pull ${FULL_IMAGE}
+            sudo docker pull "${FULL_IMAGE}"
 
             # Stop and remove old container if exists
-            #docker stop my-app || true
-            #docker rm my-app || true
+            sudo docker stop sip_calculator || true
+            sudo docker rm sip_calculator || true
 
-            # Run new container (adjust ports/envs as needed)
-            docker run -d --name sip_calculator -p 5000:5000 ${FULL_IMAGE}
+            # Run new container
+            sudo docker run -d --name sip_calculator -p 5000:5000 "${FULL_IMAGE}"
