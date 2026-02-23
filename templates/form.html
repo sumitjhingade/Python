@@ -1,19 +1,120 @@
-<html> 
-    <title>SIP calculator</title>
-    <header>
-    <h1>SIP Calculator</h1>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-
-    <p>Please enter below information to calculate your value</p>
-    </header>
-   <body>
-
-     <form action="" method="POST"> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SIP Information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+      background: #f4f6f8;
+    }
+    h1 {
+      text-align: center;
+      color: #1a237e;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 20px;
+      color: #333;
+    }
+    p {
+      line-height: 1.5;
+      color: #444;
+    }
+    ul {
+      margin-left: 20px;
+    }
+    .example-box {
+      margin-top: 16px;
+      padding: 12px;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: right;
+    }
+    th {
+      background: #e3f2fd;
+      text-align: center;
+    }
+    td:first-child,
+    th:first-child {
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>SIP (Systematic Investment Plan)</h1>
+<form action="" method="POST"> 
          <p>Amount <input name="Amount" /></p> 
          <p>Durations <input name="Durations" /></p> 
          <p>Returns <input name="Returns" /></p> 
          <p><input type="submit"></p> 
       </form> 
-       
-   </body> 
-</html> 
+
+  <div class="card">
+    <p>
+      A <strong>Systematic Investment Plan (SIP)</strong> allows you to invest a fixed
+      amount at regular intervals (usually monthly) into a mutual fund or other
+      investment product.
+    </p>
+
+    <h2>How SIP Works</h2>
+    <ul>
+      <li>You invest a fixed amount regularly (e.g., ₹5,000 every month).</li>
+      <li>Your money is invested at different market levels (rupee cost averaging).</li>
+      <li>Over the long term, compounding helps your investments grow.</li>
+    </ul>
+
+    <h2>Key Inputs for SIP</h2>
+    <ul>
+      <li><strong>Monthly Investment:</strong> Amount you invest every month.</li>
+      <li><strong>Expected Annual Return:</strong> Assumed percentage return per year.</li>
+      <li><strong>Investment Period:</strong> Total duration of the SIP in years.</li>
+    </ul>
+
+    <div class="example-box">
+      <strong>Example (for illustration only):</strong><br />
+      Monthly SIP: ₹5,000<br />
+      Expected Annual Return: 12%<br />
+      Investment Period: 10 years
+      <table>
+        <tr>
+          <th>Item</th>
+          <th>Amount (₹)</th>
+        </tr>
+        <tr>
+          <td>Total Invested</td>
+          <td>6,00,000</td>
+        </tr>
+        <tr>
+          <td>Approx. Future Value</td>
+          <td>11,61,000</td>
+        </tr>
+        <tr>
+          <td>Estimated Gains</td>
+          <td>5,61,000</td>
+        </tr>
+      </table>
+      <p style="margin-top:8px; font-size: 12px; color:#666;">
+        *Figures are approximate and for illustration only. Actual returns may vary.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
